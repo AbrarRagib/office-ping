@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🚨 Office Alert Board</title>
+  <script src="ably.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -106,7 +107,7 @@
 
   <div class="status-bar">
     <div class="dot" id="dot"></div>
-    <span id="status-txt">Loading...</span>
+    <span id="status-txt">Connecting...</span>
     <span id="online"></span>
   </div>
 
@@ -139,13 +140,6 @@
 
 <script>
   const ABLY_KEY = 'FUodqA.1uHVxw:UDGE8wWe4vzejA5h6tHZPz-UokOyNW9-t07i5AJwS8M';
-
-  const CDNS = [
-    'https://cdn.ably.com/lib/ably.min-1.js',
-    'https://unpkg.com/ably@1/ably.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/ably/1.2.50/ably.min.js',
-    'https://cdn.jsdelivr.net/npm/ably@1/ably.min.js'
-  ];
 
   const moods = {
     sunny:  { label: '☀️ Sunny',  cls: 'mood-sunny'  },
@@ -216,8 +210,7 @@
     addLog('You sent: All clear', null);
   }
 
-  function initAbly() {
-    setStatus('Connecting...', '');
+  window.addEventListener('load', function () {
     const ably = new Ably.Realtime({ key: ABLY_KEY, closeOnUnload: true });
     channel    = ably.channels.get('office-alert');
 
@@ -235,21 +228,7 @@
     });
     ably.connection.on('failed',       () => { setStatus('Connection failed', 'err'); setButtons(false); });
     ably.connection.on('disconnected', () => { setStatus('Disconnected', 'err'); setButtons(false); document.getElementById('online').textContent = ''; });
-  }
-
-  function loadAbly(cdns) {
-    if (cdns.length === 0) { setStatus('Failed to load — check internet', 'err'); return; }
-    const url  = cdns[0];
-    const rest = cdns.slice(1);
-    setStatus('Loading... (' + url.split('/')[2] + ')', '');
-    const s   = document.createElement('script');
-    s.src     = url;
-    s.onload  = () => { if (window.Ably) initAbly(); else loadAbly(rest); };
-    s.onerror = () => loadAbly(rest);
-    document.head.appendChild(s);
-  }
-
-  window.addEventListener('load', () => loadAbly(CDNS));
+  });
 </script>
 </body>
 </html>
