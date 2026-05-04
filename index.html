@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🚨 Office Alert Board</title>
-  <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -76,8 +75,6 @@
     .mood-stormy { background: #fde8e8; color: #a32d2d; }
     .mood-foggy  { background: #f0f0ec; color: #555; }
     .log-time    { font-size: 11px; color: #bbb; flex-shrink: 0; }
-
-    /* OVERLAY */
     #overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
       background: rgba(180,0,0,0.94);
@@ -109,7 +106,7 @@
 
   <div class="status-bar">
     <div class="dot" id="dot"></div>
-    <span id="status-txt">Connecting...</span>
+    <span id="status-txt">Loading...</span>
     <span id="online"></span>
   </div>
 
@@ -133,7 +130,6 @@
   </div>
 </div>
 
-<!-- FULL SCREEN ALERT OVERLAY -->
 <div id="overlay">
   <div class="ov-icon">🚨</div>
   <div class="ov-title">ALERT!</div>
@@ -144,12 +140,19 @@
 <script>
   const ABLY_KEY = 'FUodqA._KBn2g:uXWH8AicxAw58-cBEQN9FY6MBEiMqvHsvbfK5NwoepE';
 
+  const CDNS = [
+    'https://cdn.ably.com/lib/ably.min-1.js',
+    'https://unpkg.com/ably@1/ably.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/ably/1.2.50/ably.min.js',
+    'https://cdn.jsdelivr.net/npm/ably@1/ably.min.js'
+  ];
+
   const moods = {
-    sunny:  { label: '☀️ Sunny',   cls: 'mood-sunny'  },
-    cloudy: { label: '⛅ Cloudy',  cls: 'mood-cloudy' },
-    rainy:  { label: '🌧️ Rainy',   cls: 'mood-rainy'  },
-    stormy: { label: '⛈️ Stormy',  cls: 'mood-stormy' },
-    foggy:  { label: '🌫️ Foggy',   cls: 'mood-foggy'  },
+    sunny:  { label: '☀️ Sunny',  cls: 'mood-sunny'  },
+    cloudy: { label: '⛅ Cloudy', cls: 'mood-cloudy' },
+    rainy:  { label: '🌧️ Rainy',  cls: 'mood-rainy'  },
+    stormy: { label: '⛈️ Stormy', cls: 'mood-stormy' },
+    foggy:  { label: '🌫️ Foggy',  cls: 'mood-foggy'  },
   };
 
   let channel;
@@ -213,7 +216,8 @@
     addLog('You sent: All clear', null);
   }
 
-  window.addEventListener('load', function () {
+  function initAbly() {
+    setStatus('Connecting...', '');
     const ably = new Ably.Realtime({ key: ABLY_KEY, closeOnUnload: true });
     channel    = ably.channels.get('office-alert');
 
@@ -231,7 +235,25 @@
     });
     ably.connection.on('failed',       () => { setStatus('Connection failed', 'err'); setButtons(false); });
     ably.connection.on('disconnected', () => { setStatus('Disconnected', 'err'); setButtons(false); document.getElementById('online').textContent = ''; });
-  });
+  }
+
+  // Try each CDN one by one until one works
+  function loadAbly(cdns) {
+    if (cdns.length === 0) {
+      setStatus('Failed to load — check internet', 'err');
+      return;
+    }
+    const url  = cdns[0];
+    const rest = cdns.slice(1);
+    setStatus('Loading... (' + url.split('/')[2] + ')', '');
+    const s    = document.createElement('script');
+    s.src      = url;
+    s.onload   = () => { if (window.Ably) initAbly(); else loadAbly(rest); };
+    s.onerror  = () => loadAbly(rest);
+    document.head.appendChild(s);
+  }
+
+  window.addEventListener('load', () => loadAbly(CDNS));
 </script>
 </body>
 </html>
