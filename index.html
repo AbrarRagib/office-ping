@@ -140,6 +140,7 @@
 
 <script>
   const ABLY_KEY = 'FUodqA.1uHVxw:UDGE8wWe4vzejA5h6tHZPz-UokOyNW9-t07i5AJwS8M';
+  const CLIENT_ID = 'user-' + Math.random().toString(36).substring(2, 8);
 
   const moods = {
     sunny:  { label: '☀️ Sunny',  cls: 'mood-sunny'  },
@@ -211,13 +212,17 @@
   }
 
   window.addEventListener('load', function () {
-    const ably = new Ably.Realtime({ key: ABLY_KEY, closeOnUnload: true });
-    channel    = ably.channels.get('office-alert');
+    const ably = new Ably.Realtime({
+      key: ABLY_KEY,
+      clientId: CLIENT_ID,
+      closeOnUnload: true
+    });
+    channel = ably.channels.get('office-alert');
 
     ably.connection.on('connected', () => {
       setStatus('Connected', 'on');
       setButtons(true);
-      channel.presence.enter({});
+      channel.presence.enter({ id: CLIENT_ID });
       channel.presence.subscribe(updateOnline);
       updateOnline();
       channel.subscribe('alert', msg => {
