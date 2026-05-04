@@ -138,7 +138,7 @@
 </div>
 
 <script>
-  const ABLY_KEY = 'FUodqA._KBn2g:uXWH8AicxAw58-cBEQN9FY6MBEiMqvHsvbfK5NwoepE';
+  const ABLY_KEY = 'FUodqA.1uHVxw:UDGE8wWe4vzejA5h6tHZPz-UokOyNW9-t07i5AJwS8M';
 
   const CDNS = [
     'https://cdn.ably.com/lib/ably.min-1.js',
@@ -237,19 +237,15 @@
     ably.connection.on('disconnected', () => { setStatus('Disconnected', 'err'); setButtons(false); document.getElementById('online').textContent = ''; });
   }
 
-  // Try each CDN one by one until one works
   function loadAbly(cdns) {
-    if (cdns.length === 0) {
-      setStatus('Failed to load — check internet', 'err');
-      return;
-    }
+    if (cdns.length === 0) { setStatus('Failed to load — check internet', 'err'); return; }
     const url  = cdns[0];
     const rest = cdns.slice(1);
     setStatus('Loading... (' + url.split('/')[2] + ')', '');
-    const s    = document.createElement('script');
-    s.src      = url;
-    s.onload   = () => { if (window.Ably) initAbly(); else loadAbly(rest); };
-    s.onerror  = () => loadAbly(rest);
+    const s   = document.createElement('script');
+    s.src     = url;
+    s.onload  = () => { if (window.Ably) initAbly(); else loadAbly(rest); };
+    s.onerror = () => loadAbly(rest);
     document.head.appendChild(s);
   }
 
